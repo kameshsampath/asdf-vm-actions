@@ -104,6 +104,7 @@ jobs:
           plugin: direnv
           giturl: https://github.com/asdf-community/asdf-direnv.git
           gitref: master
+
       - name: "Debug"
         run: |
           echo "${{ toJson(steps.plugin-test.outputs) }}"
