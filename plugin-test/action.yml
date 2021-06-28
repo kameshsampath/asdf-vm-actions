@@ -32,6 +32,8 @@ inputs:
 
 outputs:
   stdout:
-    description: "The stdout of the test command"
+    description: "An array of stdout lines the test command"
   stderr:
-    description: "The stderr of the test command"
+    description: "An array of stderr of the test command"
+  debug:
+    description: "An array of debug lines of the test command"

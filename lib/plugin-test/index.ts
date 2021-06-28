@@ -2,10 +2,11 @@ import * as core from "@actions/core";
 import * as exec from "@actions/exec";
 import { setupAsdf } from "../setup";
 
-let myStderr = "";
-let myStdout = "";
+const stdoutLines: string[] = [];
+const stderrLines: string[] = [];
+const debugLines: string[] = [];
 
-export async function pluginTest(): Promise<any> {
+export async function pluginTest(): Promise<void> {
   await setupAsdf();
   const command = core.getInput("command", { required: true });
   const version = core.getInput("version", { required: true });
@@ -16,11 +17,14 @@ export async function pluginTest(): Promise<any> {
   ).replace("asdf-", "");
   const options: exec.ExecOptions = {};
   options.listeners = {
-    stdout: (data: Buffer) => {
-      myStdout += data.toString();
+    stdline: (line: string) => {
+      stdoutLines.push(line.replace(/(?:\r\n|\r|\n)/g, ""));
     },
-    stderr: (data: Buffer) => {
-      myStderr += data.toString();
+    errline: (line: string) => {
+      stderrLines.push(line.replace(/(?:\r\n|\r|\n)/g, ""));
+    },
+    debug: (line: string) => {
+      debugLines.push(line.replace(/(?:\r\n|\r|\n)/g, ""));
     },
   };
   const giturl =
@@ -48,7 +52,8 @@ export async function pluginTestAll(): Promise<void> {
   core.exportVariable("GITHUB_API_TOKEN", githubToken);
   core.startGroup("Test plugin");
   await pluginTest();
-  core.setOutput("stdout", myStdout);
-  core.setOutput("stderr", myStderr);
+  core.setOutput("stdout", { lines: stdoutLines });
+  core.setOutput("stderr", { lines: stderrLines });
+  core.setOutput("debuglines", { lines: debugLines });
   core.endGroup();
 }

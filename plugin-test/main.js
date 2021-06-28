@@ -232,10 +232,10 @@ var require_core = __commonJS((exports2) => {
     return val.trim();
   }
   exports2.getInput = getInput3;
-  function setOutput(name, value) {
+  function setOutput2(name, value) {
     command_1.issueCommand("set-output", {name}, value);
   }
-  exports2.setOutput = setOutput;
+  exports2.setOutput = setOutput2;
   function setCommandEcho(enabled) {
     command_1.issue("echo", enabled ? "on" : "off");
   }
@@ -1248,11 +1248,26 @@ async function setupAsdf() {
 }
 
 // lib/plugin-test/index.ts
+var stdoutLines = [];
+var stderrLines = [];
+var debugLines = [];
 async function pluginTest() {
   await setupAsdf();
   const command = core2.getInput("command", {required: true});
   const version = core2.getInput("version", {required: true});
   const plugin = (core2.getInput("plugin", {required: false}) || process.env.GITHUB_REPOSITORY.split("/")[1]).replace("asdf-", "");
+  const options = {};
+  options.listeners = {
+    stdline: (line) => {
+      stdoutLines.push(line.replace(/(?:\r\n|\r|\n)/g, ""));
+    },
+    errline: (line) => {
+      stderrLines.push(line.replace(/(?:\r\n|\r|\n)/g, ""));
+    },
+    debug: (line) => {
+      debugLines.push(line.replace(/(?:\r\n|\r|\n)/g, ""));
+    }
+  };
   const giturl = core2.getInput("giturl", {required: false}) || `https://github.com/${process.env.GITHUB_REPOSITORY}`;
   const gitref = core2.getInput("gitref", {required: false}) || process.env.GITHUB_SHA;
   await exec3.exec("asdf", [
@@ -1264,13 +1279,16 @@ async function pluginTest() {
     "--asdf-plugin-gitref",
     gitref,
     command
-  ]);
+  ], options);
 }
 async function pluginTestAll() {
   const githubToken = core2.getInput("github_token", {required: false});
   core2.exportVariable("GITHUB_API_TOKEN", githubToken);
   core2.startGroup("Test plugin");
   await pluginTest();
+  core2.setOutput("stdout", {lines: stdoutLines});
+  core2.setOutput("stderr", {lines: stderrLines});
+  core2.setOutput("debuglines", {lines: debugLines});
   core2.endGroup();
 }
 
